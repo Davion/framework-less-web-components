@@ -1,6 +1,12 @@
 import ObservableElement from './ObservableElement.js'
 
 export default class AuthorForm extends ObservableElement {
+  static get observedAttributes() {
+    return [
+      'current-filter'
+    ]
+  }
+
   connectedCallback() {
     this.template = document
       .getElementById('author-form');
@@ -27,6 +33,12 @@ export default class AuthorForm extends ObservableElement {
             inputs[1].value + '|' +
             (select.value === 'Topic' ? '' : select.value));
 
+          this.addAuthor({
+            name: inputs[0].value,
+            email: inputs[1].value,
+            topic: select.value === 'Topic' ? '' : select.value
+          });
+
           this.resetForm(inputs);
         }
       });
@@ -36,25 +48,28 @@ export default class AuthorForm extends ObservableElement {
         if (e.target.matches('select.search')
           && e.target.value !== 'Search by') {
           console.log('Filter by: ' + e.target.value);
+          this.changeFilter(e.target.value);
         }
       });
+
+      super.connectAttributes();
   }
 
   isValid(inputs) {
-    let isInvalid = false
+    let isInvalid = false;
   
     inputs.forEach(i => {
       if (i.value && i.checkValidity()) {
-        i.classList.remove('is-invalid')
-        i.classList.add('is-valid')
+        i.classList.remove('is-invalid');
+        i.classList.add('is-valid');
       } else {
-        i.classList.remove('is-valid')
-        i.classList.add('is-invalid')
-        isInvalid = true
+        i.classList.remove('is-valid');
+        i.classList.add('is-invalid');
+        isInvalid = true;
       }
     })
   
-    return !isInvalid
+    return !isInvalid;
   }  
 
   resetForm(inputs) {
@@ -63,5 +78,28 @@ export default class AuthorForm extends ObservableElement {
       i.classList.remove('is-valid');
     })
     inputs[0].focus();
+  }
+
+  addAuthor(author) {
+    window
+      .applicationContext
+      .actions
+      .addAuthor(author);
+  }
+  
+  changeFilter(filter) {
+    window
+      .applicationContext
+      .actions
+      .changeFilter(filter);
+  }
+
+  updateContent() {
+    // Capture state mutation to synchronize the search filter
+    // with the dropdown for a nice effect, and reset the form
+    if (this.currentFilter !== 'All') {
+      this.form.querySelector('select').value = this.currentFilter;
+    }
+    this.resetForm(this.form.querySelectorAll('input'));
   }
 }
